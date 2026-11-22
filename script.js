@@ -11,6 +11,9 @@ import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 
 import { bayerdither } from "./shaders/bayerdither";
 import { emissive } from "three/tsl";
+
+import { textInteraction } from "./textInteraction";
+
 let isMouseDown = false;
 let isDragging = false;
 
@@ -268,6 +271,9 @@ loadMesh(
   "AssetsNFonts/Headlights/SingleCircular.obj",
   new THREE.Vector3(0, 1, 5 + trainZ),
 );
+const omniLight = new THREE.PointLight(0xffea00, 20, 10, 0.1);
+omniLight.position.z = 5;
+editor.add(omniLight);
 
 loadMesh(
   "AssetsNFonts/Bell/Bell.obj",
@@ -390,3 +396,5 @@ window.addEventListener("mouseout", () => {
   rotY = 0;
   rotX = 0;
 });
+
+textInteraction();

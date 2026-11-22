@@ -56,7 +56,7 @@ h1 {
   z-index: -1;
   background-image: url("AssetsNFonts/Grid.png");
   background-repeat: repeat;
-  background-size: 200px 200px;
+  background-size: 180px 180px;
   box-shadow: inset 0px 0px 20px rgba(32, 32, 32, 1);
   animation: scroll 30s linear infinite;
 }
@@ -88,6 +88,12 @@ p::selection {
   margin: 30px auto;
   width: 700px;
   filter: drop-shadow(0px 10px 20px rgba(49, 11, 0, 0.458));
+  transition: all 0.25s cubic-bezier(0.68, 1.4, 0.32, 1.6);
+}
+
+#editorContainer:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0px 13px 30px rgba(49, 11, 0, 0.458));
 }
 
 #editorText {
@@ -109,6 +115,12 @@ canvas {
 
   border: 20px solid transparent;
   border-image-source: url("AssetsNFonts/Sprites/Circle.png");
-  border-image-slice: 14;
+  border-image-slice: 12;
   border-image-repeat: round;
+  transition: all 0.25s cubic-bezier(0.68, 1.4, 0.32, 1.6);
+}
+
+.interactable span {
+  display: inline-block;
+  will-change: transform;
 }
