@@ -9,7 +9,7 @@ import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUnifo
 import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
 import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 
-import { bayerdither } from "./bayerdither";
+import { bayerdither } from "./shaders/bayerdither";
 import { emissive } from "three/tsl";
 let isMouseDown = false;
 let isDragging = false;
@@ -25,6 +25,8 @@ let deltaX = 0;
 let deltaY = 0;
 let targetRotY = 0;
 
+let trainZ = -1;
+
 let lastMoveTime = 0;
 
 const mouse = new THREE.Vector2();
@@ -37,7 +39,7 @@ let size = 6;
 
 const wheelZ = 0;
 const wheelY = 0.1;
-const wheelOffsetZ = 2.2;
+const wheelOffsetZ = 2.6;
 const wheelOffsetX = 2.2;
 const wheelScale = 1.05;
 const smollWheelScale = 0.8;
@@ -49,29 +51,41 @@ const camera = new THREE.OrthographicCamera(
   size * aspect,
   size,
   -size,
-  10,
-  35,
+  2,
+  120,
 );
 const renderer = new THREE.WebGLRenderer({
   antialias: false,
 });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 
 editor.background = new THREE.Color(0x336021);
 
 const composer = new EffectComposer(renderer);
-composer.setPixelRatio(2);
 composer.setSize(pxWidth, pxHeight);
 const renderPass = new RenderPass(editor, camera);
 composer.addPass(renderPass);
+const textureLoader = new THREE.TextureLoader();
+
+const tileTexture = textureLoader.load("AssetsNFonts/Grid.png");
+tileTexture.colorSpace = THREE.SRGBColorSpace;
+tileTexture.magFilter = THREE.NearestFilter;
+tileTexture.minFilter = THREE.NearestFilter;
+tileTexture.wrapS = THREE.RepeatWrapping;
+tileTexture.wrapT = THREE.RepeatWrapping;
+tileTexture.repeat.set(30, 30);
+
 const gtaoPass = new GTAOPass(editor, camera, pxWidth, pxHeight);
+
 gtaoPass.blendIntensity = 1.2;
 
 gtaoPass.updateGtaoMaterial({
-  radius: 2.5,
-  distanceExponent: 1.2,
-  thickness: 2,
-  scale: 0.5,
-  samples: 32,
+  radius: 1.5,
+  distanceExponent: 1.5,
+  thickness: 1,
+  scale: 1.0,
+  samples: 16,
 });
 
 gtaoPass.updatePdMaterial({
@@ -79,7 +93,6 @@ gtaoPass.updatePdMaterial({
   rings: 2,
   samples: 8,
 });
-
 composer.addPass(gtaoPass);
 
 const bloomity = new UnrealBloomPass(
@@ -93,7 +106,7 @@ composer.addPass(bloomity);
 
 const outputPass = new OutputPass();
 composer.addPass(outputPass);
-composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 7.0));
+composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 6.0));
 
 camPiv.add(camera);
 
@@ -101,69 +114,95 @@ editor.add(camPiv);
 
 renderer.setSize(pxWidth, pxHeight, false);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-document.body.appendChild(renderer.domElement);
+const editorContainer = document.getElementById("editorContainer");
 
-const ambientLight = new THREE.AmbientLight(0x9a9e85, 1.4);
+editorContainer.appendChild(renderer.domElement);
+
+const ambientLight = new THREE.AmbientLight(0x9a9e85, 0.5);
 editor.add(ambientLight);
 
-const rectLight = new THREE.RectAreaLight(0xb2c797, 60, 5, 5);
-rectLight.position.set(5, 10, -5);
+const rectLight = new THREE.RectAreaLight(0xb2c797, 60, 5, 2);
+
+rectLight.position.set(-5, 10, 3);
+
 rectLight.lookAt(0, 0, 0);
+
 editor.add(rectLight);
 
-const rimLight = new THREE.DirectionalLight(0xdf7717, 3.0);
-rimLight.position.set(-6, 3, -8);
-editor.add(rimLight);
+const sunLight = new THREE.DirectionalLight(0xffb53d, 4.0);
 
-const backLight = new THREE.RectAreaLight(0xbabfb4, 15, 5, 5);
-backLight.position.set(-5, 6, 3);
-backLight.lookAt(0, 0, 0);
-editor.add(backLight);
-
-const sunLight = new THREE.DirectionalLight(0xffb53d, 1.0);
-sunLight.position.set(5, 10, -20);
+sunLight.position.set(-30, 40, 5);
 sunLight.target.position.set(0, 0, 0);
+
 sunLight.castShadow = true;
 
+sunLight.shadow.mapSize.set(1024, 1024);
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 80;
+
+sunLight.shadow.camera.left = -15;
+sunLight.shadow.camera.right = 15;
+sunLight.shadow.camera.top = 15;
+sunLight.shadow.camera.bottom = -15;
+
+sunLight.shadow.bias = -0.0005;
+sunLight.shadow.normalBias = 0.02;
+
+editor.add(sunLight);
+editor.add(sunLight.target);
 const centerStripeLight = new THREE.DirectionalLight(0xffb53d, 2.5);
 centerStripeLight.position.set(10, 4, 12);
 editor.add(centerStripeLight);
 
 editor.add(sunLight);
 const baseMaterial = new THREE.MeshStandardMaterial({
-  color: 0x43434a,
-  roughness: 0.3,
-  metalness: 0.6,
+  color: 0x26464d,
+  roughness: 0.55,
+  metalness: 0.3,
 });
 
 const baseLightMaterial = new THREE.MeshStandardMaterial({
-  color: 0x5d5d66,
-  roughness: 0.12,
-  metalness: 0.6,
+  color: 0xebe0c9,
+  roughness: 0.45,
+  metalness: 0.4,
 });
 
 const accentMaterial = new THREE.MeshStandardMaterial({
-  color: 0x8a2415,
-  metalness: 0.3,
+  color: 0xc98a2c,
+  metalness: 0.45,
   roughness: 0.2,
 });
 
 const windowMaterial = new THREE.MeshStandardMaterial({
-  color: 0xc49851,
-  roughness: 0.1,
+  color: 0x9c8652,
+  roughness: 0.15,
+  metalness: 0.1,
+  emissive: 0xffea00,
+  emissiveIntensity: 30,
 });
-
 const wheelMaterial = new THREE.MeshStandardMaterial({
   color: 0xffffff,
 });
 
 const lightMaterial = new THREE.MeshStandardMaterial({
   emissive: 0xffea00,
-  emissiveIntensity: 30,
+  emissiveIntensity: 100,
+});
+
+const bellMaterial = new THREE.MeshStandardMaterial({
+  color: 0xca8136,
+  roughness: 0.4,
+  metalic: 0.6,
+});
+
+const tileMaterial = new THREE.MeshStandardMaterial({
+  color: 0x7adacac,
+  roughness: 1,
+  map: tileTexture,
 });
 
 camera.position.z = 20;
-camera.position.y = 5;
+camera.position.y = 10;
 camera.lookAt(0, 2, 0);
 targetRotY = Math.PI / 5.4;
 
@@ -178,6 +217,8 @@ function loadMesh(
     (object) => {
       object.traverse((child) => {
         if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
           if (child.name.includes("Light")) {
             child.material = baseLightMaterial;
           } else if (child.name.includes("Base")) {
@@ -196,6 +237,9 @@ function loadMesh(
             console.log("found glow");
             child.material = lightMaterial;
           }
+          if (child.name.includes("Bell")) {
+            child.material = bellMaterial;
+          }
         }
       });
 
@@ -210,25 +254,34 @@ function loadMesh(
   );
 }
 
-loadMesh("AssetsNFonts/Body/Cylindrical.obj", new THREE.Vector3(0, 0, 1));
+loadMesh(
+  "AssetsNFonts/Body/Cylindrical.obj",
+  new THREE.Vector3(0, 0, 1 + trainZ),
+);
 
 loadMesh(
   "AssetsNFonts/SmokeStackers/Default.obj",
-  new THREE.Vector3(0, 1.8, 3.6),
+  new THREE.Vector3(0, 1.8, 3.6 + trainZ),
 );
 
 loadMesh(
   "AssetsNFonts/Headlights/SingleCircular.obj",
-  new THREE.Vector3(0, 1, 5),
+  new THREE.Vector3(0, 1, 5 + trainZ),
+);
+
+loadMesh(
+  "AssetsNFonts/Bell/Bell.obj",
+  new THREE.Vector3(0, 2.8, 0.8),
+  new THREE.Vector3(0.35, 0.35, 0.35),
 );
 
 const countX = 2;
-const countZ = 3;
+const countZ = 2;
 
 for (let z = 0; z < countZ; z++) {
   for (let x = 0; x < countX; x++) {
     const posX = (x - (countX - 1) / 2) * wheelOffsetX;
-    const posZ = wheelZ + (z - (countZ - 1) / 2) * wheelOffsetZ;
+    const posZ = wheelZ + (z - (countZ - 1) / 2) * wheelOffsetZ + trainZ;
 
     loadMesh(
       "AssetsNFonts/NormalWheel.obj",
@@ -240,7 +293,7 @@ for (let z = 0; z < countZ; z++) {
 
 for (let x = 0; x < countX; x++) {
   const posX = (x - (countX - 1) / 2) * wheelOffsetX;
-  const posZ = wheelZ + countZ + 1.2;
+  const posZ = wheelZ + countZ + 1.8 + trainZ;
 
   loadMesh(
     "AssetsNFonts/NormalWheel.obj",
@@ -248,6 +301,12 @@ for (let x = 0; x < countX; x++) {
     new THREE.Vector3(wheelScale, smollWheelScale, smollWheelScale),
   );
 }
+
+const boxGeo = new THREE.BoxGeometry(120, 1, 120);
+const box = new THREE.Mesh(boxGeo, tileMaterial);
+box.position.y = -1.4;
+box.receiveShadow = true;
+editor.add(box);
 
 function animate() {
   if (isMouseDown) {
