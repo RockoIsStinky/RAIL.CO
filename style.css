@@ -12,10 +12,12 @@
   --primarycol: #336021;
   --secondarycol: #df7717;
   --bright: #f4f2ef;
+  --stampglow: rgb(221, 160, 37);
 }
 
 body,
 html {
+  -webkit-user-select: none;
   overscroll-behavior: none;
   background-color: var(--secondarycol);
   font-family: "Rockfire";
@@ -35,7 +37,7 @@ h1 {
   -webkit-user-select: none;
   position: relative;
   z-index: 1;
-  letter-spacing: 10px;
+  letter-spacing: 15px;
   text-align: center;
   font-size: 300px;
   font-weight: 100;
@@ -44,7 +46,7 @@ h1 {
   padding-bottom: 40px;
   margin-bottom: 20px;
 
-  -webkit-text-stroke: 8px var(--bright);
+  -webkit-text-stroke: 14px var(--bright);
   paint-order: stroke fill;
 
   filter: drop-shadow(0px 0px 10px rgba(48, 19, 1, 0.75))
@@ -66,7 +68,7 @@ h1 {
     background-position: 0 0;
   }
   to {
-    background-position: 200px 200px;
+    background-position: 0px 180px;
   }
 }
 
@@ -78,8 +80,8 @@ p {
 }
 
 p::selection {
-  color: var(--primarycol);
-  background-color: var(--bright);
+  color: var(--bright);
+  background-color: var(--secondarycol);
 }
 
 #editorContainer {
@@ -87,17 +89,17 @@ p::selection {
   image-rendering: crisp-edges;
   margin: 30px auto;
   width: 700px;
-  filter: drop-shadow(0px 10px 20px rgba(49, 11, 0, 0.458));
-  transition: all 0.25s cubic-bezier(0.68, 1.4, 0.32, 1.6);
+  filter: drop-shadow(0px 0px 5px var(--stampglow));
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1.25);
 }
 
 #editorContainer:hover {
-  transform: translateY(-3px);
-  filter: drop-shadow(0px 13px 30px rgba(49, 11, 0, 0.458));
+  transform: translateY(-5px);
+  filter: drop-shadow(0px 0px 10px var(--stampglow));
 }
 
 #editorText {
-  background-color: white;
+  background-color: var(--bright);
   width: 120px;
   margin: 0 auto -15px auto;
   padding: 10px 6px;
@@ -111,6 +113,7 @@ p::selection {
 canvas {
   display: block;
   image-rendering: crisp-edges;
+  box-sizing: border-box;
   width: 700px;
 
   border: 20px solid transparent;
@@ -122,5 +125,57 @@ canvas {
 
 .interactable span {
   display: inline-block;
+  -webkit-user-select: none;
   will-change: transform;
+}
+
+#uiContainer {
+  background-color: var(--primarycol);
+  box-shadow: inset 0px 0px 20px var(--stampglow);
+  filter: drop-shadow(0px 0px 5px var(--stampglow));
+
+  margin: 0px auto 400px auto;
+  padding: 30px 20px;
+  width: 600px;
+
+  border: 20px solid transparent;
+  border-image-source: url("AssetsNFonts/Sprites/Circle.png");
+  border-image-slice: 12;
+  border-image-repeat: round;
+  transition: all 0.25s cubic-bezier(0.68, 1.4, 0.32, 1.6);
+  background-clip: padding-box;
+}
+
+#uiContainer:hover {
+  transform: translateY(-5px);
+  filter: drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.458));
+}
+
+#flexArrows {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--secondarycol);
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.57);
+
+  gap: 255px;
+}
+
+.arrow {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.arrowSprite {
+  width: 25px;
+}
+
+.invert {
+  transform: scaleX(-1);
 }
