@@ -5,14 +5,14 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
-import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
-import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
-import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 
+// lovely shaders from shadertoy ported
+import { createTiltShiftPass } from "./shaders/tiltShift";
 import { bayerdither } from "./shaders/bayerdither";
-import { emissive } from "three/tsl";
 
+// helper functions
 import { textInteraction } from "./textInteraction";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 let isMouseDown = false;
 let isDragging = false;
@@ -35,7 +35,7 @@ let lastMoveTime = 0;
 const mouse = new THREE.Vector2();
 
 const pxWidth = 400;
-const pxHeight = 300;
+const pxHeight = 340;
 const aspect = pxWidth / pxHeight;
 
 let size = 6;
@@ -60,6 +60,8 @@ const camera = new THREE.OrthographicCamera(
 const renderer = new THREE.WebGLRenderer({
   antialias: false,
 });
+renderer.setSize(pxWidth, pxHeight, false);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
@@ -67,8 +69,10 @@ editor.background = new THREE.Color(0x336021);
 
 const composer = new EffectComposer(renderer);
 composer.setSize(pxWidth, pxHeight);
+
 const renderPass = new RenderPass(editor, camera);
 composer.addPass(renderPass);
+
 const textureLoader = new THREE.TextureLoader();
 
 const tileTexture = textureLoader.load("AssetsNFonts/Grid.png");
@@ -107,6 +111,16 @@ const bloomity = new UnrealBloomPass(
 
 composer.addPass(bloomity);
 
+const tiltPass = createTiltShiftPass(renderer, {
+  maxBlur: 10.0,
+  focusWidth: 0.2,
+  feather: 0.55,
+  saturation: 1.0,
+  contrast: 1.0,
+  vignette: 0.6,
+});
+composer.addPass(tiltPass);
+
 const outputPass = new OutputPass();
 composer.addPass(outputPass);
 composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 6.0));
@@ -115,10 +129,7 @@ camPiv.add(camera);
 
 editor.add(camPiv);
 
-renderer.setSize(pxWidth, pxHeight, false);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
 const editorContainer = document.getElementById("editorContainer");
-
 editorContainer.appendChild(renderer.domElement);
 
 const ambientLight = new THREE.AmbientLight(0x9a9e85, 0.5);
@@ -206,7 +217,7 @@ const tileMaterial = new THREE.MeshStandardMaterial({
 
 camera.position.z = 20;
 camera.position.y = 10;
-camera.lookAt(0, 2, 0);
+camera.lookAt(0, 1, 0);
 targetRotY = Math.PI / 5.4;
 
 function loadMesh(
@@ -310,7 +321,7 @@ for (let x = 0; x < countX; x++) {
 
 const boxGeo = new THREE.BoxGeometry(120, 1, 120);
 const box = new THREE.Mesh(boxGeo, tileMaterial);
-box.position.y = -1.4;
+box.position.y = -1.35;
 box.receiveShadow = true;
 editor.add(box);
 

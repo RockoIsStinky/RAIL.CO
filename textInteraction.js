@@ -5,18 +5,24 @@ export function textInteraction() {
 
   interactables.forEach((interact) => {
     const isP = interact.tagName === "P";
+    const img = interact.querySelector("img");
 
-    const currentRad = isP ? 2 : 1;
+    const currentRad = isP ? 2 : img ? 2 : 1;
     const currentStrength = isP ? 0.1 : 0.05;
-    const text = interact.textContent;
 
-    interact.innerHTML = [...text]
-      .map((char, i) =>
-        char === " "
-          ? "&nbsp;"
-          : `<span style="animation-delay:${i * 0.12}s">${char}</span>`,
-      )
-      .join("");
+    if (img) {
+      interact.innerHTML = `<span>${img.outerHTML}</span>`;
+    } else {
+      const text = interact.textContent;
+
+      interact.innerHTML = [...text]
+        .map((char, i) =>
+          char === " "
+            ? "&nbsp;"
+            : `<span style="animation-delay:${i * 0.12}s">${char}</span>`,
+        )
+        .join("");
+    }
 
     const interactableLetters = interact.querySelectorAll("span"); // seperates into span so we get it
     interactableLetters.forEach((letter) => {
@@ -32,7 +38,7 @@ export function textInteraction() {
       letter.targetScale = 1;
       letter.baseRad = rect.height * currentRad;
       letter.baseMaxMove = rect.height * currentStrength;
-      letter.baseMaxAngle = rect.height * currentStrength * 2;
+      letter.baseMaxAngle = rect.height * currentStrength * 10;
     });
     letters.push(...interactableLetters);
   });
@@ -74,8 +80,12 @@ export function textInteraction() {
         const force = (currentRadius - dist) / currentRadius;
         letter.targetY = Math.sign(dy || 1) * force * currentMaxMove;
         letter.targetX = Math.sign(dx || 1) * force * currentMaxMove;
+
         letter.targetRot =
-          ((dx + dy) / currentRadius) * force * currentMaxAngle;
+          -((dx * dy) / (currentRadius * currentRadius)) *
+          force *
+          currentMaxAngle;
+
         const scaleX = dx / currentRadius;
         const scaleY = dy / currentRadius;
 
