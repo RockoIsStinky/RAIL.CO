@@ -299,7 +299,7 @@ function animate() {
       if (!mat.userData.baseColor) mat.userData.baseColor = mat.color.clone();
       if (mat.userData.baseIntensity === undefined) {
         if (mat.emissive.getHex() === 0x000000) {
-          mat.emissive.copy(mat.userData.baseColor);
+          mat.emissive.setHex(0xffdba1);
           mat.emissiveIntensity = 0;
         }
         mat.userData.baseColor = mat.color.clone();
@@ -309,8 +309,8 @@ function animate() {
       tempColor.copy(mat.userData.baseColor);
       let targetIntensity = mat.userData.baseIntensity;
       if (isHovered) {
-        tempColor.multiplyScalar(1.2);
-        targetIntensity = mat.userData.baseIntensity + 1;
+        tempColor.multiplyScalar(2);
+        targetIntensity = mat.userData.baseIntensity + 0.15;
       }
       mat.color.lerp(tempColor, 0.15);
       mat.emissiveIntensity = larp(
