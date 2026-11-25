@@ -47,6 +47,10 @@ const wheelOffsetX = 2.2;
 const wheelScale = 1.05;
 const smollWheelScale = 0.8;
 
+let hoveredObject = null;
+const tempColor = new THREE.Color();
+
+// SETUP
 const editor = new THREE.Scene();
 const camPiv = new THREE.Object3D();
 const camera = new THREE.OrthographicCamera(
@@ -74,7 +78,6 @@ const renderPass = new RenderPass(editor, camera);
 composer.addPass(renderPass);
 
 const textureLoader = new THREE.TextureLoader();
-
 const tileTexture = textureLoader.load("AssetsNFonts/Grid.png");
 tileTexture.colorSpace = THREE.SRGBColorSpace;
 tileTexture.magFilter = THREE.NearestFilter;
@@ -83,10 +86,13 @@ tileTexture.wrapS = THREE.RepeatWrapping;
 tileTexture.wrapT = THREE.RepeatWrapping;
 tileTexture.repeat.set(30, 30);
 
+// RAYCASTER
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+// POST PROCESSING
 const gtaoPass = new GTAOPass(editor, camera, pxWidth, pxHeight);
-
 gtaoPass.blendIntensity = 1.2;
-
 gtaoPass.updateGtaoMaterial({
   radius: 1.5,
   distanceExponent: 1.5,
@@ -94,7 +100,6 @@ gtaoPass.updateGtaoMaterial({
   scale: 1.0,
   samples: 16,
 });
-
 gtaoPass.updatePdMaterial({
   radius: 2,
   rings: 2,
@@ -104,117 +109,65 @@ composer.addPass(gtaoPass);
 
 const bloomity = new UnrealBloomPass(
   new THREE.Vector2(pxWidth, pxHeight),
-  0.005,
-  0.1,
-  0.2,
+  0.05,
+  0.4,
+  1.0,
 );
-
 composer.addPass(bloomity);
 
-const tiltPass = createTiltShiftPass(renderer, {
-  maxBlur: 10.0,
-  focusWidth: 0.2,
-  feather: 0.55,
-  saturation: 1.0,
-  contrast: 1.0,
-  vignette: 0.6,
-});
-composer.addPass(tiltPass);
+addLighting();
 
-const outputPass = new OutputPass();
-composer.addPass(outputPass);
-composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 6.0));
-
-camPiv.add(camera);
-
-editor.add(camPiv);
-
-const editorContainer = document.getElementById("editorContainer");
-editorContainer.appendChild(renderer.domElement);
-
-const ambientLight = new THREE.AmbientLight(0x9a9e85, 0.5);
-editor.add(ambientLight);
-
-const rectLight = new THREE.RectAreaLight(0xb2c797, 60, 5, 2);
-
-rectLight.position.set(-5, 10, 3);
-
-rectLight.lookAt(0, 0, 0);
-
-editor.add(rectLight);
-
-const sunLight = new THREE.DirectionalLight(0xffb53d, 4.0);
-
-sunLight.position.set(-30, 40, 5);
-sunLight.target.position.set(0, 0, 0);
-
-sunLight.castShadow = true;
-
-sunLight.shadow.mapSize.set(1024, 1024);
-sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 80;
-
-sunLight.shadow.camera.left = -15;
-sunLight.shadow.camera.right = 15;
-sunLight.shadow.camera.top = 15;
-sunLight.shadow.camera.bottom = -15;
-
-sunLight.shadow.bias = -0.0005;
-sunLight.shadow.normalBias = 0.02;
-
-editor.add(sunLight);
-editor.add(sunLight.target);
-const centerStripeLight = new THREE.DirectionalLight(0xffb53d, 2.5);
-centerStripeLight.position.set(10, 4, 12);
-editor.add(centerStripeLight);
-
-editor.add(sunLight);
-const baseMaterial = new THREE.MeshStandardMaterial({
-  color: 0x26464d,
-  roughness: 0.55,
-  metalness: 0.3,
-});
-
-const baseLightMaterial = new THREE.MeshStandardMaterial({
-  color: 0xebe0c9,
-  roughness: 0.45,
-  metalness: 0.4,
-});
-
-const accentMaterial = new THREE.MeshStandardMaterial({
-  color: 0xc98a2c,
-  metalness: 0.45,
-  roughness: 0.2,
-});
-
-const windowMaterial = new THREE.MeshStandardMaterial({
-  color: 0x9c8652,
-  roughness: 0.15,
-  metalness: 0.1,
-  emissive: 0xffea00,
-  emissiveIntensity: 30,
-});
-const wheelMaterial = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
-});
-
-const lightMaterial = new THREE.MeshStandardMaterial({
-  emissive: 0xffea00,
-  emissiveIntensity: 100,
-});
-
-const bellMaterial = new THREE.MeshStandardMaterial({
-  color: 0xca8136,
-  roughness: 0.4,
-  metalic: 0.6,
-});
-
+// MATERIALS
+const trainMaterials = {
+  baseLight: new THREE.MeshStandardMaterial({
+    name: "Light",
+    color: 0xebe0c9,
+    roughness: 0.45,
+    metalness: 0.4,
+  }),
+  base: new THREE.MeshStandardMaterial({
+    name: "Base",
+    color: 0x26464d,
+    roughness: 0.55,
+    metalness: 0.3,
+  }),
+  accent: new THREE.MeshStandardMaterial({
+    name: "Accent",
+    color: 0xc98a2c,
+    metalness: 0.45,
+    roughness: 0.2,
+  }),
+  window: new THREE.MeshStandardMaterial({
+    name: "Window",
+    color: 0x9c8652,
+    roughness: 0.15,
+    metalness: 0.1,
+    emissive: 0xffea00,
+    emissiveIntensity: 5,
+  }),
+  wheel: new THREE.MeshStandardMaterial({
+    name: "WheelIn",
+    color: 0xffffff,
+  }),
+  light: new THREE.MeshStandardMaterial({
+    name: "Glow",
+    emissive: 0xffea00,
+    emissiveIntensity: 10,
+  }),
+  bell: new THREE.MeshStandardMaterial({
+    name: "Bell",
+    color: 0xca8136,
+    roughness: 0.4,
+    metalness: 0.6,
+  }),
+};
 const tileMaterial = new THREE.MeshStandardMaterial({
   color: 0x7adacac,
   roughness: 1,
   map: tileTexture,
 });
 
+// CAMERA SETUP
 camera.position.z = 20;
 camera.position.y = 10;
 camera.lookAt(0, 1, 0);
@@ -229,31 +182,15 @@ function loadMesh(
   loader.load(
     path,
     (object) => {
+      const materialList = Object.values(trainMaterials);
       object.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
-          if (child.name.includes("Light")) {
-            child.material = baseLightMaterial;
-          } else if (child.name.includes("Base")) {
-            child.material = baseMaterial;
-          }
-          if (child.name.includes("Accent")) {
-            child.material = accentMaterial;
-          }
-          if (child.name.includes("Window")) {
-            child.material = windowMaterial;
-          }
-          if (child.name.includes("WheelIn")) {
-            child.material = wheelMaterial;
-          }
-          if (child.name.includes("Glow")) {
-            console.log("found glow");
-            child.material = lightMaterial;
-          }
-          if (child.name.includes("Bell")) {
-            child.material = bellMaterial;
-          }
+          const match = materialList.find((mat) =>
+            child.name.includes(mat.name),
+          );
+          if (match) child.material = match.clone();
         }
       });
 
@@ -275,7 +212,7 @@ loadMesh(
 
 loadMesh(
   "AssetsNFonts/SmokeStackers/Default.obj",
-  new THREE.Vector3(0, 1.8, 3.6 + trainZ),
+  new THREE.Vector3(0, 1.8, 4.4 + trainZ),
 );
 
 loadMesh(
@@ -288,8 +225,15 @@ editor.add(omniLight);
 
 loadMesh(
   "AssetsNFonts/Bell/Bell.obj",
-  new THREE.Vector3(0, 2.8, 0.8),
+  new THREE.Vector3(0, 2.6, trainZ + 3.1),
   new THREE.Vector3(0.35, 0.35, 0.35),
+);
+
+loadMesh("AssetsNFonts/SteamDome/Bean.obj", new THREE.Vector3(0, 2.3, trainZ));
+
+loadMesh(
+  "AssetsNFonts/SteamDome/Sand.obj",
+  new THREE.Vector3(0, 2.3, trainZ + 1.7),
 );
 
 const countX = 2;
@@ -319,11 +263,13 @@ for (let x = 0; x < countX; x++) {
   );
 }
 
+// FLOOR
 const boxGeo = new THREE.BoxGeometry(120, 1, 120);
 const box = new THREE.Mesh(boxGeo, tileMaterial);
 box.position.y = -1.35;
 box.receiveShadow = true;
 editor.add(box);
+box.raycast = () => {};
 
 function animate() {
   if (isMouseDown) {
@@ -341,6 +287,40 @@ function animate() {
 
   camPiv.rotation.y += diffX * 0.3;
 
+  editor.traverse((child) => {
+    if (!child.isMesh || !child.material) return;
+    const isHovered = child === hoveredObject;
+    const materials = Array.isArray(child.material)
+      ? child.material
+      : [child.material];
+
+    materials.forEach((mat) => {
+      if (!mat.emissive) return;
+      if (!mat.userData.baseColor) mat.userData.baseColor = mat.color.clone();
+      if (mat.userData.baseIntensity === undefined) {
+        if (mat.emissive.getHex() === 0x000000) {
+          mat.emissive.copy(mat.userData.baseColor);
+          mat.emissiveIntensity = 0;
+        }
+        mat.userData.baseColor = mat.color.clone();
+        mat.userData.baseIntensity = mat.emissiveIntensity;
+      }
+
+      tempColor.copy(mat.userData.baseColor);
+      let targetIntensity = mat.userData.baseIntensity;
+      if (isHovered) {
+        tempColor.multiplyScalar(1.2);
+        targetIntensity = mat.userData.baseIntensity + 1;
+      }
+      mat.color.lerp(tempColor, 0.15);
+      mat.emissiveIntensity = larp(
+        mat.emissiveIntensity,
+        targetIntensity,
+        0.15,
+      );
+    });
+  });
+
   composer.render();
 }
 
@@ -348,8 +328,8 @@ renderer.setAnimationLoop(animate);
 
 function updateMouseVector(clientX, clientY) {
   const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 }
 
 function getCoordinates(e) {
@@ -369,6 +349,7 @@ editorRender.addEventListener("mousedown", (e) => {
   lastX = e.clientX;
   lastMoveTime = performance.now();
 });
+
 editorRender.addEventListener("mousemove", (e) => {
   if (!isMouseDown) return;
 
@@ -408,4 +389,75 @@ window.addEventListener("mouseout", () => {
   rotX = 0;
 });
 
+//SELECTION
+editorRender.addEventListener("mousemove", (e) => {
+  updateMouseVector(e.clientX, e.clientY);
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObjects(editor.children, true);
+  hoveredObject = intersects.length > 0 ? intersects[0].object : null;
+});
+
 textInteraction();
+
+// HELPER FUNCTIONS
+// wooo larping function returns!
+function larp(start, end, alpha) {
+  return (start = start + (end - start) * alpha);
+}
+
+function addLighting() {
+  const tiltPass = createTiltShiftPass(renderer, {
+    maxBlur: 10.0,
+    focusWidth: 0.2,
+    feather: 0.55,
+    saturation: 1.0,
+    contrast: 1.0,
+    vignette: 1,
+  });
+  composer.addPass(tiltPass);
+
+  const outputPass = new OutputPass();
+  composer.addPass(outputPass);
+  composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 6.0));
+
+  camPiv.add(camera);
+
+  editor.add(camPiv);
+
+  const editorContainer = document.getElementById("editorContainer");
+  editorContainer.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0x9a9e85, 0.5);
+  editor.add(ambientLight);
+
+  const rectLight = new THREE.RectAreaLight(0xb2c797, 60, 5, 2);
+  rectLight.position.set(-5, 10, 3);
+  rectLight.lookAt(0, 0, 0);
+  editor.add(rectLight);
+
+  const sunLight = new THREE.DirectionalLight(0xffb53d, 4.0);
+
+  sunLight.position.set(-30, 40, 5);
+  sunLight.target.position.set(0, 0, 0);
+
+  sunLight.castShadow = true;
+
+  sunLight.shadow.mapSize.set(1024, 1024);
+  sunLight.shadow.camera.near = 0.5;
+  sunLight.shadow.camera.far = 80;
+
+  sunLight.shadow.camera.left = -15;
+  sunLight.shadow.camera.right = 15;
+  sunLight.shadow.camera.top = 15;
+  sunLight.shadow.camera.bottom = -15;
+
+  sunLight.shadow.bias = -0.0005;
+  sunLight.shadow.normalBias = 0.02;
+
+  editor.add(sunLight);
+  editor.add(sunLight.target);
+
+  const centerStripeLight = new THREE.DirectionalLight(0xffb53d, 2.5);
+  centerStripeLight.position.set(10, 4, 12);
+  editor.add(centerStripeLight);
+}
