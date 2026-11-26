@@ -343,11 +343,18 @@ function getCoordinates(e) {
 
 const editorRender = document.querySelector("canvas");
 
+const partName = document.querySelector("#partName");
+
 editorRender.addEventListener("mousedown", (e) => {
   editorRender.style.cursor = "grabbing";
   isMouseDown = true;
   lastX = e.clientX;
   lastMoveTime = performance.now();
+  if (hoveredObject) {
+    partName.textContent = hoveredObject.name
+      .split("-")[0]
+      .replaceAll("_", " ");
+  }
 });
 
 editorRender.addEventListener("mousemove", (e) => {
