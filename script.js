@@ -50,6 +50,15 @@ const smollWheelScale = 0.8;
 let hoveredObject = null;
 const tempColor = new THREE.Color();
 
+const properties = {
+  Body: "color",
+  Rings: "color",
+  Bell: "color shape",
+  CowCatcher: "color shape",
+  Support: "color",
+  Roof: "color shape",
+};
+
 // SETUP
 const editor = new THREE.Scene();
 const camPiv = new THREE.Object3D();
@@ -64,6 +73,7 @@ const camera = new THREE.OrthographicCamera(
 const renderer = new THREE.WebGLRenderer({
   antialias: false,
 });
+
 renderer.setSize(pxWidth, pxHeight, false);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
@@ -351,9 +361,9 @@ editorRender.addEventListener("mousedown", (e) => {
   lastX = e.clientX;
   lastMoveTime = performance.now();
   if (hoveredObject) {
-    partName.textContent = hoveredObject.name
-      .split("-")[0]
-      .replaceAll("_", " ");
+    const partNameText = hoveredObject.name.split("-")[0].replaceAll("_", " ");
+    partName.textContent = partNameText;
+    console.log(properties[partNameText.replaceAll(" ", "")]);
   }
 });
 

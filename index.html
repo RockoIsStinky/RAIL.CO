@@ -39,7 +39,48 @@
           />
         </button>
       </div>
-      <p class="smalltext">Haha steam train go brrr</p>
+      <div class="colorPicker">
+        <div class="colorRect"></div>
+        <div class="sliders">
+          <div class="slider">
+            <input
+              id="hue"
+              class="sliderDisplay"
+              type="range"
+              min="0"
+              max="255"
+              value="180"
+            />
+            <label for="hue"> <p class="colorVal" id="hueVal">180</p></label>
+          </div>
+          <div class="slider">
+            <input
+              id="saturation"
+              class="sliderDisplay"
+              type="range"
+              min="0"
+              max="255"
+              value="180"
+            />
+            <label for="saturation">
+              <p class="colorVal" id="saturationVal">180</p></label
+            >
+          </div>
+          <div class="slider">
+            <input
+              id="value"
+              class="sliderDisplay"
+              type="range"
+              min="0"
+              max="255"
+              value="180"
+            />
+            <label for="value">
+              <p class="colorVal" id="valueVal">180</p></label
+            >
+          </div>
+        </div>
+      </div>
     </div>
     <a
       class="borderStamp"
