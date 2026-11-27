@@ -28,6 +28,13 @@ export function initSlider() {
 
     saturation.style.background = `linear-gradient(90deg, ${minSat}, ${maxSat})`;
     value.style.background = `linear-gradient(-90deg, ${minVal} 0%, ${midVal} 50%, ${maxVal} 100%)`;
+
+    hue.style.setProperty(
+      "--thumb-color",
+      new THREE.Color().setHSL(h, 1, 0.5).getStyle(),
+    );
+    saturation.style.setProperty("--thumb-color", color.getStyle());
+    value.style.setProperty("--thumb-color", color.getStyle());
   }
   hue.addEventListener("input", handleColors);
   saturation.addEventListener("input", handleColors);

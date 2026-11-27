@@ -280,6 +280,7 @@ a:active {
 }
 
 .sliderDisplay {
+  --thumb-color: #ffffff;
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -317,7 +318,7 @@ a:active {
   width: 12px;
   height: 42px;
   border-radius: 4px;
-  background: var(--secondarycol);
+  background: var(--thumb-color);
   border: 3px solid;
   border-color: var(--bright);
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.662);
@@ -335,7 +336,7 @@ a:active {
   width: 15px;
   height: 30px;
   border-radius: 4px;
-  background: var(--secondarycol);
+  background: var(--thumb-color);
   border: 3px solid;
   border-color: var(--bright);
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.662);
