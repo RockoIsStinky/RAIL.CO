@@ -12,6 +12,7 @@ import { bayerdither } from "./shaders/bayerdither";
 
 // helper functions
 import { textInteraction } from "./textInteraction";
+import { initSlider } from "./slider";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 let isMouseDown = false;
@@ -478,3 +479,5 @@ function addLighting() {
   centerStripeLight.position.set(10, 4, 12);
   editor.add(centerStripeLight);
 }
+
+initSlider();
