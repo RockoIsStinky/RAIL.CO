@@ -9,9 +9,9 @@
 }
 
 :root {
-  --primarycol: #336021;
-  --secondarycol: #df7717;
-  --bright: #f4f2ef;
+  --primarycol: #373d58;
+  --secondarycol: #bc5522;
+  --bright: #fff7b1;
   --stampglow: rgba(28, 9, 5, 0.35);
 }
 
@@ -128,9 +128,9 @@ canvas {
   min-width: 0;
   box-sizing: border-box;
   image-rendering: crisp-edges;
-  border: 10px solid transparent;
+  border: 12px solid transparent;
   border-image-source: url(AssetsNFonts/Sprites/Circle.png);
-  border-image-slice: 14;
+  border-image-slice: 15;
   border-image-repeat: round;
 }
 .interactable span {
@@ -175,10 +175,11 @@ canvas {
   justify-content: center;
   background-color: var(--secondarycol);
   padding: 10px;
+  border: 3px solid var(--bright);
   border-radius: 10px;
   margin-bottom: 30px;
 
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.57);
+  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.57);
   gap: 10px;
 }
 
@@ -211,9 +212,9 @@ canvas {
 }
 
 .borderStamp {
-  border: 10px solid transparent;
+  border: 12px solid transparent;
   border-image-source: url("AssetsNFonts/Sprites/Circle.png");
-  border-image-slice: 14;
+  border-image-slice: 15;
   border-image-repeat: round;
   background-clip: padding-box;
 }

@@ -138,7 +138,7 @@ const trainMaterials = {
   }),
   base: new THREE.MeshStandardMaterial({
     name: "Base",
-    color: 0x26464d,
+    color: 0x2d304f,
     roughness: 0.55,
     metalness: 0.3,
   }),
@@ -150,10 +150,10 @@ const trainMaterials = {
   }),
   window: new THREE.MeshStandardMaterial({
     name: "Window",
-    color: 0x9c8652,
+    color: 0xfaf3be,
     roughness: 0.15,
     metalness: 0.1,
-    emissive: 0xffea00,
+    emissive: 0xfaf3be,
     emissiveIntensity: 5,
   }),
   wheel: new THREE.MeshStandardMaterial({
@@ -162,7 +162,7 @@ const trainMaterials = {
   }),
   light: new THREE.MeshStandardMaterial({
     name: "Glow",
-    emissive: 0xffea00,
+    emissive: 0xfaf3be,
     emissiveIntensity: 10,
   }),
   bell: new THREE.MeshStandardMaterial({
@@ -436,7 +436,7 @@ function addLighting() {
 
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
-  composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 6.0));
+  composer.addPass(bayerdither(pxWidth, pxHeight, 1, 1.0, 8.0));
 
   camPiv.add(camera);
 
@@ -445,15 +445,15 @@ function addLighting() {
   const editorContainer = document.getElementById("editorContainer");
   editorContainer.appendChild(renderer.domElement);
 
-  const ambientLight = new THREE.AmbientLight(0x9a9e85, 0.5);
+  const ambientLight = new THREE.AmbientLight(0x9e9885, 0.5);
   editor.add(ambientLight);
 
-  const rectLight = new THREE.RectAreaLight(0xb2c797, 60, 5, 2);
+  const rectLight = new THREE.RectAreaLight(0x9897c7, 60, 5, 2);
   rectLight.position.set(-5, 10, 3);
   rectLight.lookAt(0, 0, 0);
   editor.add(rectLight);
 
-  const sunLight = new THREE.DirectionalLight(0xffb53d, 4.0);
+  const sunLight = new THREE.DirectionalLight(0xcfceeb, 4.0);
 
   sunLight.position.set(-30, 40, 5);
   sunLight.target.position.set(0, 0, 0);
